@@ -42,10 +42,8 @@ def get_portfolio_summary(account_id: int, db: Session = Depends(get_db)):
     total_value = sum(item.shares * item.current_price for item in items)
     total_cost = sum(item.shares * item.purchase_price for item in items)
 
-    # BUG 5: Division by zero when portfolio is empty (total_cost = 0).
-    # The gain/loss percentage calculation crashes instead of returning 0.
     gain_loss = total_value - total_cost
-    gain_loss_pct = ((total_value - total_cost) / total_cost) * 100
+    gain_loss_pct = (gain_loss / total_cost * 100) if total_cost != 0 else 0.0
 
     return PortfolioSummary(
         account_id=account_id,
