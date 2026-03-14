@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -10,16 +11,27 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 @router.post("/", response_model=AccountResponse)
 def create_account(account: AccountCreate, db: Session = Depends(get_db)):
-    # BUG 1: No duplicate email check - allows creating multiple accounts
-    # with the same email, which will crash on the DB unique constraint
-    # instead of returning a friendly error.
+    existing = db.query(Account).filter(Account.email == account.email).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="An account with this email already exists.",
+        )
+
     db_account = Account(
         owner_name=account.owner_name,
         email=account.email,
         balance=account.balance,
     )
     db.add(db_account)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="An account with this email already exists.",
+        )
     db.refresh(db_account)
     return db_account
 
