@@ -1,4 +1,4 @@
-# Spot Fintech - Internal API
+# FinServ Co - Internal API
 
 **FinServ Co** is a financial services company managing customer accounts, transactions, and portfolio analytics through a monorepo-backed API platform.
 
